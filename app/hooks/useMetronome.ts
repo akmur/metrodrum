@@ -3,7 +3,7 @@ import * as Tone from "tone";
 import { useAudio } from "@/providers/AudioProvider";
 
 export type Subdivision = 3 | 4 | 6;
-export type SoundPreset = "click" | "beep" | "tick" | "bip";
+export type SoundPreset = "click" | "beep" | "tick";
 
 interface MetronomeState {
   bpm: number;
@@ -40,13 +40,6 @@ const createSynthForPreset = (preset: SoundPreset): Tone.Synth => {
       return new Tone.Synth({
         oscillator: { type: "square" },
         envelope: { attack: 0.001, decay: 0.05, sustain: 0, release: 0.05 },
-      }).toDestination();
-    
-    case "bip":
-      // Square wave - digital bip
-      return new Tone.Synth({
-        oscillator: { type: "square" },
-        envelope: { attack: 0.001, decay: 0.08, sustain: 0, release: 0.08 },
       }).toDestination();
   }
 };

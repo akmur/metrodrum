@@ -7,7 +7,6 @@ const SOUND_PRESETS: { value: SoundPreset; label: string }[] = [
   { value: "click", label: "Click" },
   { value: "beep", label: "Beep" },
   { value: "tick", label: "Tick" },
-  { value: "bip", label: "Bip" },
 ];
 
 export default function Metronome() {
