@@ -459,31 +459,27 @@ export default function MidiPlayer() {
         </div>
       )}
 
-      {/* Drum Effects */}
+      {/* Reverb */}
       {tracks.some((t) => t.percussion) && (
         <details className="w-full max-w-md rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
           <summary className="cursor-pointer select-none px-4 py-3 text-sm font-semibold text-gray-700 dark:text-gray-300">
-            🎛️ Drum Effects
+            🎚️ Reverb
           </summary>
-          <div className="grid gap-4 px-4 pb-4">
-            {/* Reverb */}
-            <fieldset className="grid gap-2 rounded-lg border border-gray-100 dark:border-gray-700 p-3">
-              <legend className="px-1 text-xs font-medium text-gray-500 dark:text-gray-400">Reverb</legend>
-              <label className="flex items-center justify-between text-xs text-gray-600 dark:text-gray-400">
-                Mix
-                <span className="tabular-nums w-10 text-right">{Math.round(fx.reverbWet * 100)}%</span>
-              </label>
-              <input type="range" min={0} max={1} step={0.01} value={fx.reverbWet}
-                onChange={(e) => updateFx("reverbWet", Number(e.target.value))}
-                className="w-full accent-blue-500" aria-label="Reverb mix" />
-              <label className="flex items-center justify-between text-xs text-gray-600 dark:text-gray-400">
-                Decay
-                <span className="tabular-nums w-10 text-right">{fx.reverbDecay.toFixed(1)}s</span>
-              </label>
-              <input type="range" min={0.1} max={10} step={0.1} value={fx.reverbDecay}
-                onChange={(e) => updateFx("reverbDecay", Number(e.target.value))}
-                className="w-full accent-blue-500" aria-label="Reverb decay" />
-            </fieldset>
+          <div className="grid gap-3 px-4 pb-4">
+            <label className="flex items-center justify-between text-xs text-gray-600 dark:text-gray-400">
+              Mix
+              <span className="tabular-nums w-10 text-right">{Math.round(fx.reverbWet * 100)}%</span>
+            </label>
+            <input type="range" min={0} max={1} step={0.01} value={fx.reverbWet}
+              onChange={(e) => updateFx("reverbWet", Number(e.target.value))}
+              className="w-full accent-blue-500" aria-label="Reverb mix" />
+            <label className="flex items-center justify-between text-xs text-gray-600 dark:text-gray-400">
+              Decay
+              <span className="tabular-nums w-10 text-right">{fx.reverbDecay.toFixed(1)}s</span>
+            </label>
+            <input type="range" min={0.1} max={10} step={0.1} value={fx.reverbDecay}
+              onChange={(e) => updateFx("reverbDecay", Number(e.target.value))}
+              className="w-full accent-blue-500" aria-label="Reverb decay" />
           </div>
         </details>
       )}
