@@ -31,6 +31,11 @@ export function Layout({ children }: { children: React.ReactNode }) {
       <head>
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <meta name="description" content="MetroDrum - Metronome and MIDI drum player" />
+        <meta name="theme-color" content="#3b82f6" />
+        <link rel="manifest" href="/manifest.json" />
+        <link rel="icon" type="image/svg+xml" href="/icon.svg" />
+        <link rel="apple-touch-icon" href="/icon-192.svg" />
         <Meta />
         <Links />
       </head>
