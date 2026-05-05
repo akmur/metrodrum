@@ -1,4 +1,6 @@
-import { INVERSION_LABELS, type TriadShape } from "./triad-data";
+import { INVERSION_LABELS, INVERSION_ORDER, type TriadShape } from "./triad-data";
+
+const DEGREE_LABELS = ["1", "3", "5"] as const;
 
 const STRINGS = 3;
 const FRETS_SHOWN = 4;
@@ -6,7 +8,7 @@ const FRETS_SHOWN = 4;
 const W = 90, H = 120;
 const TOP = 26;
 const LEFT = 12;
-const RIGHT = 22; // extra room for fret indicator
+const RIGHT = 30; // extra room for fret indicator
 const BOTTOM = 14;
 const IW = W - LEFT - RIGHT;
 const IH = H - TOP - BOTTOM;
@@ -21,8 +23,9 @@ interface Props {
 }
 
 export default function TriadDiagram({ shape, active, onClick }: Props) {
-  const { frets, startFret, rootName } = shape;
+  const { frets, startFret, rootName, inversion } = shape;
   const showNut = startFret === 1;
+  const degreeOrder = INVERSION_ORDER[inversion];
 
   return (
     <button
@@ -38,8 +41,8 @@ export default function TriadDiagram({ shape, active, onClick }: Props) {
         {/* Fret position indicator (when not starting at nut) */}
         {!showNut && (
           <text
-            x={W - 2} y={TOP + FH * 0.6}
-            textAnchor="end"
+            x={W - RIGHT + R + 2} y={TOP + FH * 0.6}
+            textAnchor="start"
             fontSize={9}
             className="fill-gray-500 dark:fill-gray-400"
           >
@@ -102,19 +105,30 @@ export default function TriadDiagram({ shape, active, onClick }: Props) {
           );
         })}
 
-        {/* Finger dots */}
+        {/* Finger dots with interval label */}
         {frets.map((fret, i) => {
           if (fret === 0) return null;
           const displayRow = fret - startFret + 1;
           if (displayRow < 1 || displayRow > FRETS_SHOWN) return null;
           const cx = LEFT + i * SW;
           const cy = TOP + (displayRow - 0.5) * FH;
+          const label = DEGREE_LABELS[degreeOrder[i]];
           return (
-            <circle
-              key={i}
-              cx={cx} cy={cy} r={R}
-              className="fill-gray-800 dark:fill-gray-100"
-            />
+            <g key={i}>
+              <circle
+                cx={cx} cy={cy} r={R}
+                className="fill-gray-800 dark:fill-gray-100"
+              />
+              <text
+                x={cx} y={cy + 3.5}
+                textAnchor="middle"
+                fontSize={8}
+                fontWeight="bold"
+                className="fill-white dark:fill-gray-900"
+              >
+                {label}
+              </text>
+            </g>
           );
         })}
       </svg>
