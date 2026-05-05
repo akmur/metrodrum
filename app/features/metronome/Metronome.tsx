@@ -7,7 +7,6 @@ const NOTE_VALUE_OPTIONS: NoteValue[] = [2, 4, 8];
 const SOUND_PRESETS: { value: SoundPreset; label: string }[] = [
   { value: "click", label: "Click" },
   { value: "beep", label: "Beep" },
-  { value: "tick", label: "Tick" },
   { value: "sticks", label: "Sticks" },
 ];
 
@@ -74,7 +73,7 @@ export default function Metronome() {
         <div className="w-full border-t border-gray-100 dark:border-gray-700" />
 
         {/* Two-column middle section */}
-        <div className="w-full grid grid-cols-[1fr_auto_1fr] gap-6 items-start">
+        <div className="w-full grid grid-cols-1 md:grid-cols-[1fr_auto_1fr] gap-6 items-start">
 
           {/* Left: BPM + Tap Tempo */}
           <BpmControl
@@ -85,8 +84,8 @@ export default function Metronome() {
             onTapTempo={tapTempo}
           />
 
-          {/* Vertical divider */}
-          <div className="self-stretch w-px bg-gray-100 dark:bg-gray-700" />
+          {/* Divider: horizontal on mobile, vertical on desktop */}
+          <div className="w-full h-px bg-gray-100 dark:bg-gray-700 md:w-px md:h-auto md:self-stretch" />
 
           {/* Right: Sound + Time Signature */}
           <div className="flex flex-col gap-5">
