@@ -5,5 +5,6 @@ export default [
     index("routes/home.tsx"),
     route("metronome", "routes/metronome.tsx"),
     route("midi", "routes/midi.tsx"),
+    route("fretboard", "routes/fretboard.tsx"),
   ]),
 ] satisfies RouteConfig;

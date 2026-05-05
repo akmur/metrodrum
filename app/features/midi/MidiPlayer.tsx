@@ -362,152 +362,168 @@ export default function MidiPlayer() {
   }, [midiData, isPlaying, play, stop]);
 
   return (
-    <div className="flex flex-col items-center gap-8 py-12">
-      <h1 className="text-3xl font-bold text-gray-900 dark:text-white">MIDI Player</h1>
+    <div className="flex justify-center py-10 px-4">
+      <div className="w-full max-w-xl bg-white dark:bg-gray-800 rounded-3xl shadow-xl p-8 flex flex-col gap-7">
 
-      {/* Preset dropdown + File upload */}
-      <div className="flex flex-col items-center gap-4">
-        {midiPresets.length > 0 && (
-          <div className="flex flex-col items-center gap-1">
-            <label htmlFor="midi-preset" className="text-sm font-medium text-gray-700 dark:text-gray-300">
-              Preset Loops
-            </label>
-            <select
-              id="midi-preset"
-              value={selectedPreset}
-              onChange={(e) => handlePresetSelect(e.target.value)}
-              className="rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-4 py-2 text-sm text-gray-900 dark:text-white"
-              aria-label="Select a preset MIDI loop"
+        {/* File loading */}
+        <div className="flex flex-col gap-4">
+          {midiPresets.length > 0 && (
+            <fieldset className="flex flex-col gap-2">
+              <legend className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-1">
+                Preset Loops
+              </legend>
+              <select
+                id="midi-preset"
+                value={selectedPreset}
+                onChange={(e) => handlePresetSelect(e.target.value)}
+                aria-label="Select a preset MIDI loop"
+                className="w-full rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 px-4 py-2.5 text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-400"
+              >
+                <option value="">— Select a preset —</option>
+                {[...midiPresets].sort((a, b) => {
+                  const bpmA = Number(a.match(/(\d+)\s*BPM/i)?.[1] ?? 999);
+                  const bpmB = Number(b.match(/(\d+)\s*BPM/i)?.[1] ?? 999);
+                  return bpmA - bpmB || a.localeCompare(b);
+                }).map((name) => (
+                  <option key={name} value={name}>
+                    {name.replace(/\.midi?$/i, "").replaceAll("_", " ")}
+                  </option>
+                ))}
+              </select>
+            </fieldset>
+          )}
+
+          <div className="flex items-center gap-3 text-xs text-gray-400 dark:text-gray-500">
+            <span className="h-px flex-1 bg-gray-100 dark:bg-gray-700" />
+            or
+            <span className="h-px flex-1 bg-gray-100 dark:bg-gray-700" />
+          </div>
+
+          <div className="flex flex-col items-center gap-2">
+            <label
+              htmlFor="midi-upload"
+              className="cursor-pointer rounded-xl bg-blue-500 px-6 py-2.5 text-sm font-semibold text-white hover:bg-blue-600 active:scale-95 transition-all shadow-md shadow-blue-500/30"
             >
-              <option value="">— Select a preset —</option>
-              {[...midiPresets].sort((a, b) => {
-                const bpmA = Number(a.match(/(\d+)\s*BPM/i)?.[1] ?? 999);
-                const bpmB = Number(b.match(/(\d+)\s*BPM/i)?.[1] ?? 999);
-                return bpmA - bpmB || a.localeCompare(b);
-              }).map((name) => (
-                <option key={name} value={name}>
-                  {name.replace(/\.midi?$/i, "").replaceAll("_", " ")}
-                </option>
-              ))}
-            </select>
+              Load MIDI File
+            </label>
+            <input
+              id="midi-upload"
+              type="file"
+              accept=".mid,.midi"
+              onChange={handleFileUpload}
+              className="sr-only"
+              aria-label="Upload MIDI file"
+            />
           </div>
-        )}
 
-        <div className="flex items-center gap-3 text-xs text-gray-400 dark:text-gray-500">
-          <span className="h-px w-8 bg-gray-300 dark:bg-gray-700" />
-          or
-          <span className="h-px w-8 bg-gray-300 dark:bg-gray-700" />
+          {fileName && (
+            <p className="text-center text-xs text-gray-500 dark:text-gray-400">
+              <span className="font-semibold text-gray-700 dark:text-gray-300">{fileName.replace(/\.midi?$/i, "").replaceAll("_", " ")}</span>
+            </p>
+          )}
         </div>
 
-        <div className="flex flex-col items-center gap-2">
-          <label
-            htmlFor="midi-upload"
-            className="cursor-pointer rounded-lg bg-blue-500 px-6 py-3 font-medium text-white hover:bg-blue-600 transition-colors"
-          >
-            Load MIDI File
-          </label>
-          <input
-            id="midi-upload"
-            type="file"
-            accept=".mid,.midi"
-            onChange={handleFileUpload}
-            className="sr-only"
-            aria-label="Upload MIDI file"
+        <div className="w-full border-t border-gray-100 dark:border-gray-700" />
+
+        {/* Two-column: BPM | Reverb */}
+        <div className="w-full grid grid-cols-[1fr_auto_1fr] gap-6 items-start">
+
+          {/* Left: BPM + Tap Tempo */}
+          <BpmControl
+            bpm={bpm}
+            min={20}
+            max={300}
+            onBpmChange={handleBpmChange}
+            onTapTempo={tapTempo}
           />
+
+          {/* Vertical divider */}
+          <div className="self-stretch w-px bg-gray-100 dark:bg-gray-700" />
+
+          {/* Right: Reverb FX */}
+          <fieldset className="flex flex-col gap-3">
+            <legend className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-1">
+              Reverb
+            </legend>
+            <div className="flex flex-col gap-1">
+              <div className="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400">
+                <span>Mix</span>
+                <span className="tabular-nums">{Math.round(fx.reverbWet * 100)}%</span>
+              </div>
+              <input
+                type="range" min={0} max={1} step={0.01} value={fx.reverbWet}
+                onChange={(e) => updateFx("reverbWet", Number(e.target.value))}
+                className="w-full accent-blue-500" aria-label="Reverb mix"
+              />
+            </div>
+            <div className="flex flex-col gap-1">
+              <div className="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400">
+                <span>Decay</span>
+                <span className="tabular-nums">{fx.reverbDecay.toFixed(1)}s</span>
+              </div>
+              <input
+                type="range" min={0.1} max={10} step={0.1} value={fx.reverbDecay}
+                onChange={(e) => updateFx("reverbDecay", Number(e.target.value))}
+                className="w-full accent-blue-500" aria-label="Reverb decay"
+              />
+            </div>
+          </fieldset>
         </div>
 
-        {fileName && (
-          <p className="text-sm text-gray-600 dark:text-gray-400">
-            Loaded: <span className="font-medium">{fileName}</span>
-          </p>
+        {/* Track list */}
+        {tracks.length > 0 && (
+          <>
+            <div className="w-full border-t border-gray-100 dark:border-gray-700" />
+            <div className="flex flex-col gap-2">
+              <p className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">
+                Tracks ({tracks.length})
+              </p>
+              <ul aria-label="MIDI tracks" className="divide-y divide-gray-100 dark:divide-gray-700 rounded-xl overflow-hidden border border-gray-100 dark:border-gray-700">
+                {tracks.map((track, i) => (
+                  <li key={i} className="flex items-center justify-between px-4 py-2 bg-gray-50 dark:bg-gray-700/40">
+                    <div className="flex flex-col">
+                      <span className="text-sm font-medium text-gray-800 dark:text-gray-100">
+                        {track.instrument}
+                      </span>
+                      <span className="text-xs text-gray-500 dark:text-gray-400">
+                        {track.name} · {track.noteCount} notes
+                      </span>
+                    </div>
+                    <button
+                      onClick={() => toggleMute(i)}
+                      aria-label={`${track.muted ? "Unmute" : "Mute"} ${track.name}`}
+                      className={`rounded-lg px-3 py-1 text-xs font-semibold transition-all active:scale-95 ${
+                        track.muted
+                          ? "bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400"
+                          : "bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400"
+                      }`}
+                    >
+                      {track.muted ? "Muted" : "On"}
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </>
         )}
-      </div>
 
-      {/* Track list with mute toggles */}
-      {tracks.length > 0 && (
-        <div className="w-full max-w-md rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 overflow-hidden">
-          <div className="border-b border-gray-200 dark:border-gray-700 px-4 py-2">
-            <h2 className="text-sm font-semibold text-gray-700 dark:text-gray-300">
-              Tracks ({tracks.length})
-            </h2>
-          </div>
-          <ul aria-label="MIDI tracks" className="divide-y divide-gray-100 dark:divide-gray-700">
-            {tracks.map((track, i) => (
-              <li key={i} className="flex items-center justify-between px-4 py-2">
-                <div className="flex flex-col">
-                  <span className="text-sm font-medium text-gray-900 dark:text-white">
-                    {track.instrument}
-                  </span>
-                  <span className="text-xs text-gray-500 dark:text-gray-400">
-                    {track.name} · {track.noteCount} notes · Ch {track.channel + 1}
-                  </span>
-                </div>
-                <button
-                  onClick={() => toggleMute(i)}
-                  aria-label={`${track.muted ? "Unmute" : "Mute"} ${track.name}`}
-                  className={`rounded px-3 py-1 text-xs font-medium transition-colors ${
-                    track.muted
-                      ? "bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400"
-                      : "bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400"
-                  }`}
-                >
-                  {track.muted ? "Muted" : "On"}
-                </button>
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
+        <div className="w-full border-t border-gray-100 dark:border-gray-700" />
 
-      {/* Reverb */}
-      {tracks.some((t) => t.percussion) && (
-        <details className="w-full max-w-md rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
-          <summary className="cursor-pointer select-none px-4 py-3 text-sm font-semibold text-gray-700 dark:text-gray-300">
-            🎚️ Reverb
-          </summary>
-          <div className="grid gap-3 px-4 pb-4">
-            <label className="flex items-center justify-between text-xs text-gray-600 dark:text-gray-400">
-              Mix
-              <span className="tabular-nums w-10 text-right">{Math.round(fx.reverbWet * 100)}%</span>
-            </label>
-            <input type="range" min={0} max={1} step={0.01} value={fx.reverbWet}
-              onChange={(e) => updateFx("reverbWet", Number(e.target.value))}
-              className="w-full accent-blue-500" aria-label="Reverb mix" />
-            <label className="flex items-center justify-between text-xs text-gray-600 dark:text-gray-400">
-              Decay
-              <span className="tabular-nums w-10 text-right">{fx.reverbDecay.toFixed(1)}s</span>
-            </label>
-            <input type="range" min={0.1} max={10} step={0.1} value={fx.reverbDecay}
-              onChange={(e) => updateFx("reverbDecay", Number(e.target.value))}
-              className="w-full accent-blue-500" aria-label="Reverb decay" />
-          </div>
-        </details>
-      )}
-
-      {/* BPM / Tempo stretching */}
-      <BpmControl
-        bpm={bpm}
-        min={20}
-        max={300}
-        onBpmChange={handleBpmChange}
-        onTapTempo={tapTempo}
-      />
-
-      {/* Controls */}
-      <div className="flex gap-4">
+        {/* Play / Stop */}
         <button
           ref={playButtonRef}
           onClick={isPlaying ? stop : play}
           disabled={!midiData}
           aria-label={isPlaying ? "Stop MIDI" : "Play MIDI"}
-          className={`rounded-full px-8 py-4 text-lg font-bold text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
-            isPlaying 
-              ? "bg-red-500 hover:bg-red-600" 
-              : "bg-green-500 hover:bg-green-600"
+          className={`w-full rounded-2xl py-4 text-xl font-bold text-white shadow-lg transition-all active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed disabled:shadow-none disabled:active:scale-100 ${
+            isPlaying
+              ? "bg-red-500 hover:bg-red-600 shadow-red-500/30"
+              : "bg-green-500 hover:bg-green-600 shadow-green-500/30"
           }`}
         >
           {isPlaying ? "Stop" : "Play"}
         </button>
+
       </div>
     </div>
   );

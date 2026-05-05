@@ -33,6 +33,18 @@ export default function Navbar() {
           >
             MIDI
           </NavLink>
+          <NavLink
+            to="/fretboard"
+            className={({ isActive }) =>
+              `text-sm font-medium transition-colors ${
+                isActive
+                  ? "text-blue-500"
+                  : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
+              }`
+            }
+          >
+            Fretboard
+          </NavLink>
         </div>
       </div>
       <button
