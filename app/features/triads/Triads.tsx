@@ -10,9 +10,12 @@ import {
   QUALITIES,
   QUALITY_LABELS,
   INVERSIONS,
+  POSITIONS,
+  POSITION_LABELS,
   computeAllShapes,
   type StringGroup,
   type Quality,
+  type Position,
   type TriadShape,
 } from "./triad-data";
 
@@ -21,13 +24,14 @@ export default function Triads() {
   const synthRef = useRef<Tone.Synth | null>(null);
   const [activeGroup, setActiveGroup] = useState<StringGroup>("GBe");
   const [activeQuality, setActiveQuality] = useState<Quality>("maj");
+  const [activePosition, setActivePosition] = useState<Position>(5);
   const [lastPlayed, setLastPlayed] = useState<string | null>(null);
   const [modalShape, setModalShape] = useState<TriadShape | null>(null);
 
   // Pre-compute all shapes for current group + quality
   const shapes = useMemo(
-    () => computeAllShapes(activeGroup, activeQuality),
-    [activeGroup, activeQuality],
+    () => computeAllShapes(activeGroup, activeQuality, activePosition),
+    [activeGroup, activeQuality, activePosition],
   );
 
   const playArpeggio = useCallback(
@@ -93,6 +97,22 @@ export default function Triads() {
                   label={STRING_GROUP_LABELS[g]}
                   active={activeGroup === g}
                   onClick={() => setActiveGroup(g)}
+                />
+              ))}
+            </div>
+          </fieldset>
+
+          <fieldset className="flex flex-col gap-2">
+            <legend className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-1">
+              Posizione
+            </legend>
+            <div className="flex flex-wrap gap-2">
+              {POSITIONS.map(p => (
+                <FilterButton
+                  key={p}
+                  label={`${POSITION_LABELS[p]} pos.`}
+                  active={activePosition === p}
+                  onClick={() => setActivePosition(p)}
                 />
               ))}
             </div>

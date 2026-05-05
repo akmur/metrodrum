@@ -92,46 +92,94 @@ function findBestFrets(baseFrets: [number, number, number]): [number, number, nu
   return best;
 }
 
+export const POSITIONS = [1, 5, 9] as const;
+export type Position = (typeof POSITIONS)[number];
+export const POSITION_LABELS: Record<Position, string> = { 1: "I", 5: "V", 9: "IX" };
+
+/** Find the fret nearest to `target` (≥ 1) for a given pitch class on a string. */
+function nearestFret(openMidi: number, pitchClass: number, target: number): number {
+  const base = (pitchClass - openMidi % 12 + 12) % 12;
+  let best = base >= 1 ? base : base + 12;
+  let bestDist = Math.abs(best - target);
+  for (let k = -1; k <= 4; k++) {
+    const f = base + k * 12;
+    if (f < 1) continue;
+    const d = Math.abs(f - target);
+    if (d < bestDist) { bestDist = d; best = f; }
+  }
+  return best;
+}
+
+/** Build frets for a shape given a fixed root fret; returns null if span > 4. */
+function buildShape(
+  rootFret: number,
+  rootStringIdx: number,
+  openMidi: readonly [number, number, number],
+  rootIdx: number,
+  intervals: readonly [number, number, number],
+  order: readonly [number, number, number],
+): [number, number, number] | null {
+  const frets = openMidi.map((open, i) => {
+    if (i === rootStringIdx) return rootFret;
+    const pc = (rootIdx + intervals[order[i]]) % 12;
+    return nearestFret(open, pc, rootFret);
+  }) as [number, number, number];
+  const span = Math.max(...frets) - Math.min(...frets);
+  return span <= 4 ? frets : null;
+}
+
 export function computeTriadShape(
   rootIdx: number,
   quality: Quality,
   inversion: Inversion,
   group: StringGroup,
+  targetRootFret = 1,
 ): TriadShape {
   const intervals = QUALITY_INTERVALS[quality];
   const order = INVERSION_ORDER[inversion];
   const openMidi = STRING_GROUP_MIDI[group];
 
+  // Which string carries the root note in this inversion?
+  const rootStringIdx = order.indexOf(0);
+  const rootPc = rootIdx % 12;
+
+  // Candidate root frets sorted by distance to target
+  const base = (rootPc - openMidi[rootStringIdx] % 12 + 12) % 12;
+  const candidates = [-1, 0, 1, 2, 3, 4]
+    .map(k => base + k * 12)
+    .filter(f => f >= 1)
+    .sort((a, b) => Math.abs(a - targetRootFret) - Math.abs(b - targetRootFret));
+
+  for (const rf of candidates) {
+    const result = buildShape(rf, rootStringIdx, openMidi, rootIdx, intervals, order);
+    if (result) {
+      const midiNotes = openMidi.map((o, i) => o + result[i]) as [number, number, number];
+      const minFret = Math.min(...result);
+      const startFret = minFret === 0 ? 1 : minFret;
+      return { rootName: ALL_ROOTS[rootIdx], rootIdx, quality, inversion, group, frets: result, midiNotes, startFret };
+    }
+  }
+
+  // Ultimate fallback: original minimum-span algorithm
   const baseFrets = openMidi.map((open, i) => {
     const targetPc = (rootIdx + intervals[order[i]]) % 12;
     const openPc = open % 12;
     return (targetPc - openPc + 12) % 12;
   }) as [number, number, number];
-
   const frets = findBestFrets(baseFrets);
   const midiNotes = openMidi.map((open, i) => open + frets[i]) as [number, number, number];
   const minFret = Math.min(...frets);
   const startFret = minFret === 0 ? 1 : minFret;
-
-  return {
-    rootName: ALL_ROOTS[rootIdx],
-    rootIdx,
-    quality,
-    inversion,
-    group,
-    frets,
-    midiNotes,
-    startFret,
-  };
+  return { rootName: ALL_ROOTS[rootIdx], rootIdx, quality, inversion, group, frets, midiNotes, startFret };
 }
 
 /** Pre-compute all shapes for quick lookup */
 export function computeAllShapes(
   group: StringGroup,
   quality: Quality,
+  targetRootFret = 1,
 ): TriadShape[][] {
-  // Returns array indexed by rootIdx, each containing [root, first, second] inversions
   return ALL_ROOTS.map((rootName, rootIdx) =>
-    INVERSIONS.map(inv => computeTriadShape(rootIdx, quality, inv, group)),
+    INVERSIONS.map(inv => computeTriadShape(rootIdx, quality, inv, group, targetRootFret)),
   );
 }
