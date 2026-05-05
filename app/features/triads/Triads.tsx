@@ -2,6 +2,7 @@ import { useState, useRef, useCallback, useMemo } from "react";
 import * as Tone from "tone";
 import { useAudio } from "@/providers/AudioProvider";
 import TriadDiagram from "./TriadDiagram";
+import TriadModal from "./TriadModal";
 import {
   ALL_ROOTS,
   STRING_GROUPS,
@@ -12,6 +13,7 @@ import {
   computeAllShapes,
   type StringGroup,
   type Quality,
+  type TriadShape,
 } from "./triad-data";
 
 export default function Triads() {
@@ -20,6 +22,7 @@ export default function Triads() {
   const [activeGroup, setActiveGroup] = useState<StringGroup>("GBe");
   const [activeQuality, setActiveQuality] = useState<Quality>("maj");
   const [lastPlayed, setLastPlayed] = useState<string | null>(null);
+  const [modalShape, setModalShape] = useState<TriadShape | null>(null);
 
   // Pre-compute all shapes for current group + quality
   const shapes = useMemo(
@@ -73,6 +76,7 @@ export default function Triads() {
   }
 
   return (
+    <>
     <div className="flex justify-center py-10 px-4">
       <div className="w-full max-w-2xl bg-white dark:bg-gray-800 rounded-3xl shadow-xl p-8 flex flex-col gap-7">
 
@@ -133,7 +137,10 @@ export default function Triads() {
                         key={inv}
                         shape={shape}
                         active={lastPlayed === key}
-                        onClick={() => playArpeggio(shape.midiNotes, key)}
+                        onClick={() => {
+                          setModalShape(shape);
+                          playArpeggio(shape.midiNotes, key);
+                        }}
                       />
                     );
                   })}
@@ -145,5 +152,15 @@ export default function Triads() {
 
       </div>
     </div>
+
+    {/* Detail modal */}
+    {modalShape && (
+      <TriadModal
+        shape={modalShape}
+        onClose={() => setModalShape(null)}
+        onPlay={() => playArpeggio(modalShape.midiNotes, `modal-${modalShape.rootName}-${modalShape.inversion}`)}
+      />
+    )}
+  </>
   );
 }

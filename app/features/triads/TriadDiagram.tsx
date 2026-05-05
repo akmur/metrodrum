@@ -20,12 +20,16 @@ interface Props {
   shape: TriadShape;
   active?: boolean;
   onClick: () => void;
+  /** Rendered SVG width (height auto-scaled). Defaults to W=90 */
+  displayWidth?: number;
 }
 
-export default function TriadDiagram({ shape, active, onClick }: Props) {
+export default function TriadDiagram({ shape, active, onClick, displayWidth }: Props) {
   const { frets, startFret, rootName, inversion } = shape;
   const showNut = startFret === 1;
   const degreeOrder = INVERSION_ORDER[inversion];
+  const dw = displayWidth ?? W;
+  const dh = Math.round((dw / W) * H);
 
   return (
     <button
@@ -37,7 +41,7 @@ export default function TriadDiagram({ shape, active, onClick }: Props) {
           : "border-gray-100 dark:border-gray-700 bg-white dark:bg-gray-800 hover:border-indigo-300 dark:hover:border-indigo-600 hover:shadow-sm"
       }`}
     >
-      <svg viewBox={`0 0 ${W} ${H}`} width={W} height={H} aria-hidden="true">
+      <svg viewBox={`0 0 ${W} ${H}`} width={dw} height={dh} aria-hidden="true">
         {/* Fret position indicator (when not starting at nut) */}
         {!showNut && (
           <text
