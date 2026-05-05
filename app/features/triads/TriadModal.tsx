@@ -48,13 +48,19 @@ export default function TriadModal({ shape, onClose, onPlay }: Props) {
         </button>
 
         {/* Title */}
-        <div className="flex flex-col items-center gap-1">
+        <div className="flex flex-col items-center gap-2">
           <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
             {shape.rootName} <span className="text-indigo-500">{QUALITY_LABELS[shape.quality]}</span>
           </h2>
-          <p className="text-sm text-gray-500 dark:text-gray-400">
-            {INVERSION_LABELS[shape.inversion]} · {STRING_GROUP_LABELS[shape.group]}
-          </p>
+          <div className="flex items-center gap-3 text-sm">
+            <span className="px-2 py-0.5 rounded-md bg-indigo-100 dark:bg-indigo-900/40 text-indigo-600 dark:text-indigo-300 font-medium">
+              {INVERSION_LABELS[shape.inversion]}
+            </span>
+            <span className="text-gray-400 dark:text-gray-500">·</span>
+            <span className="text-gray-500 dark:text-gray-400">
+              corde {STRING_GROUP_LABELS[shape.group]}
+            </span>
+          </div>
         </div>
 
         {/* Enlarged diagram — click to play */}
