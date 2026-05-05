@@ -57,18 +57,7 @@ export default function Navbar() {
           >
             Chords
           </NavLink>
-          <NavLink
-            to="/triads"
-            className={({ isActive }) =>
-              `text-sm font-medium transition-colors ${
-                isActive
-                  ? "text-blue-500"
-                  : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
-              }`
-            }
-          >
-            Triads
-          </NavLink>
+
         </div>
       </div>
       <button
