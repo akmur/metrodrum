@@ -6,5 +6,7 @@ export default [
     route("metronome", "routes/metronome.tsx"),
     route("midi", "routes/midi.tsx"),
     route("fretboard", "routes/fretboard.tsx"),
+    route("chords", "routes/chords.tsx"),
+    route("triads", "routes/triads.tsx"),
   ]),
 ] satisfies RouteConfig;

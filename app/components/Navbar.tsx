@@ -45,6 +45,30 @@ export default function Navbar() {
           >
             Fretboard
           </NavLink>
+          <NavLink
+            to="/chords"
+            className={({ isActive }) =>
+              `text-sm font-medium transition-colors ${
+                isActive
+                  ? "text-blue-500"
+                  : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
+              }`
+            }
+          >
+            Chords
+          </NavLink>
+          <NavLink
+            to="/triads"
+            className={({ isActive }) =>
+              `text-sm font-medium transition-colors ${
+                isActive
+                  ? "text-blue-500"
+                  : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
+              }`
+            }
+          >
+            Triads
+          </NavLink>
         </div>
       </div>
       <button
