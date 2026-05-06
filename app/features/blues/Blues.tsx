@@ -17,7 +17,11 @@ const DEGREE_LABELS: Record<BluesDegree, string> = { I7: "I7", IV7: "IV7", V7: "
 
 // Available loop files: { bpm, url }
 const LOOPS = [
-  { bpm: 90, url: "/samples/blues/blues-loop-90bpm.m4a" },
+  { bpm: 80,  url: "/samples/blues/blues-loop-80bpm.m4a"  },
+  { bpm: 90,  url: "/samples/blues/blues-loop-90bpm.m4a"  },
+  { bpm: 100, url: "/samples/blues/blues-loop-100bpm.m4a" },
+  { bpm: 110, url: "/samples/blues/blues-loop-110bpm.m4a" },
+  { bpm: 120, url: "/samples/blues/blues-loop-120bpm.m4a" },
 ] as const;
 type LoopBpm = (typeof LOOPS)[number]["bpm"];
 
@@ -30,7 +34,7 @@ export default function Blues() {
   const beatRef = useRef(0);
 
   const [activeKey, setActiveKey] = useState<BluesKey>("E");
-  const [selectedBpm, setSelectedBpm] = useState<LoopBpm>(90);
+  const [selectedBpm, setSelectedBpm] = useState<LoopBpm>(100);
   const [isPlaying, setIsPlaying] = useState(false);
   const [audioReady, setAudioReady] = useState(false);
   const [countIn, setCountIn] = useState<number | null>(null);
