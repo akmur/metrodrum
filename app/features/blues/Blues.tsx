@@ -1,8 +1,10 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 import * as Tone from "tone";
+import { Midi } from "@tonejs/midi";
 import { useAudio } from "@/providers/AudioProvider";
 import ChordDiagram from "@/features/chords/ChordDiagram";
 import { CHORDS, OPEN_STRING_MIDI } from "@/features/chords/chord-data";
+import { createDrumKit, type DrumKit } from "@/features/midi/gm-sounds";
 import {
   BLUES_KEYS,
   BLUES_CHORDS,
@@ -13,6 +15,8 @@ import {
   type BluesDegree,
 } from "./blues-data";
 
+const ORIGINAL_BPM = 100; // matches "100BPM  Blues 12bar4.mid"
+
 const DEGREE_LABELS: Record<BluesDegree, string> = { I7: "I7", IV7: "IV7", V7: "V7" };
 
 export default function Blues() {
@@ -20,33 +24,69 @@ export default function Blues() {
   const arpeggioSynthRef = useRef<Tone.Synth | null>(null);
   const clickSynthRef = useRef<Tone.Synth | null>(null);
   const loopRef = useRef<Tone.Loop | null>(null);
+  const drumKitRef = useRef<DrumKit | null>(null);
+  const partsRef = useRef<Tone.Part[]>([]);
+  const midiRef = useRef<Midi | null>(null);
   const beatRef = useRef(0);
 
   const [activeKey, setActiveKey] = useState<BluesKey>("E");
   const [bpm, setBpm] = useState(100);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [midiReady, setMidiReady] = useState(false);
   const [countIn, setCountIn] = useState<number | null>(null);
   const [currentBar, setCurrentBar] = useState<number | null>(null);
   const [highlighted, setHighlighted] = useState<BluesDegree | null>(null);
 
   const chordMap = BLUES_CHORDS[activeKey];
 
+  // Load MIDI file on mount
+  useEffect(() => {
+    let cancelled = false;
+    async function loadMidi() {
+      try {
+        const res = await fetch(
+          `/samples/midi/${encodeURIComponent("100BPM  Blues 12bar4.mid")}`
+        );
+        const buf = await res.arrayBuffer();
+        if (!cancelled) {
+          midiRef.current = new Midi(buf);
+          setMidiReady(true);
+        }
+      } catch (e) {
+        console.error("Failed to load Blues MIDI:", e);
+      }
+    }
+    loadMidi();
+    return () => { cancelled = true; };
+  }, []);
+
   // Stop transport helper
   const stopTransport = useCallback(() => {
     loopRef.current?.stop();
     try { loopRef.current?.dispose(); } catch { /* already disposed */ }
     loopRef.current = null;
+
+    partsRef.current.forEach(p => { try { p.stop(); p.dispose(); } catch { /* */ } });
+    partsRef.current = [];
+
+    try { clickSynthRef.current?.dispose(); } catch { /* */ }
+    clickSynthRef.current = null;
+
     Tone.getTransport().stop();
     Tone.getTransport().cancel();
     beatRef.current = 0;
   }, []);
 
-  // Cleanup on unmount
-  useEffect(() => () => stopTransport(), [stopTransport]);
+  // Cleanup on unmount — also dispose drum kit
+  useEffect(() => () => {
+    stopTransport();
+    try { drumKitRef.current?.dispose(); } catch { /* */ }
+    drumKitRef.current = null;
+  }, [stopTransport]);
 
-  // Sync BPM to transport while playing
+  // Sync BPM to transport while playing (scaled for MIDI timing)
   useEffect(() => {
-    if (isPlaying) Tone.getTransport().bpm.value = bpm;
+    if (isPlaying) Tone.getTransport().bpm.value = (bpm / ORIGINAL_BPM) * 120;
   }, [bpm, isPlaying]);
 
   const togglePlay = useCallback(async () => {
@@ -60,23 +100,64 @@ export default function Blues() {
       return;
     }
 
-    if (!clickSynthRef.current) {
-      clickSynthRef.current = new Tone.Synth({
-        oscillator: { type: "triangle" },
-        envelope: { attack: 0.001, decay: 0.07, sustain: 0, release: 0.07 },
-        volume: -10,
-      }).toDestination();
+    if (!midiRef.current) return; // MIDI not loaded yet
+
+    // Create drum kit on first play and wait for samples to load
+    if (!drumKitRef.current) {
+      const kit = createDrumKit();
+      drumKitRef.current = kit;
+      await kit.loaded;
     }
 
-    beatRef.current = 0;
-    Tone.getTransport().bpm.value = bpm;
+    // Click synth for count-in only
+    clickSynthRef.current = new Tone.Synth({
+      oscillator: { type: "triangle" },
+      envelope: { attack: 0.001, decay: 0.07, sustain: 0, release: 0.07 },
+      volume: -10,
+    }).toDestination();
 
+    const transport = Tone.getTransport();
+    // Scale transport BPM so MIDI note times (in seconds at original tempo)
+    // play back at the correct speed. At 120 = 1:1 ratio.
+    transport.bpm.value = (bpm / ORIGINAL_BPM) * 120;
+    transport.loop = false;
+
+    // Build Tone.Part for each MIDI track
+    const midi = midiRef.current;
+    const activeTracks = midi.tracks.filter(t => t.notes.length > 0);
+    const totalDuration = Math.max(
+      ...activeTracks.map(t => Math.max(...t.notes.map(n => n.time + n.duration)))
+    );
+
+    const kit = drumKitRef.current;
+    const parts: Tone.Part[] = [];
+
+    for (const track of activeTracks) {
+      const notes = track.notes.map(n => ({
+        time: n.time,
+        midi: n.midi,
+        velocity: n.velocity,
+      }));
+      const part = new Tone.Part((time, value: { midi: number; velocity: number }) => {
+        kit.trigger(value.midi, time, value.velocity);
+      }, notes);
+      part.loop = true;
+      part.loopEnd = totalDuration;
+      part.start("1m"); // starts after the 1-bar count-in
+      parts.push(part);
+    }
+    partsRef.current = parts;
+
+    // Beat-tracking loop: first 4 beats = count-in, then track bars
+    beatRef.current = 0;
     loopRef.current = new Tone.Loop((time) => {
       const beat = beatRef.current;
-      const isDownbeat = beat % 4 === 0;
-      clickSynthRef.current?.triggerAttackRelease(
-        isDownbeat ? "C5" : "G4", "64n", time,
-      );
+      if (beat < 4) {
+        // Count-in click on every beat
+        clickSynthRef.current?.triggerAttackRelease(
+          beat % 4 === 0 ? "C5" : "G4", "64n", time,
+        );
+      }
       Tone.getDraw().schedule(() => {
         if (beat < 4) {
           setCountIn(4 - beat);
@@ -90,7 +171,7 @@ export default function Blues() {
     }, "4n");
 
     loopRef.current.start(0);
-    Tone.getTransport().start();
+    transport.start();
     setIsPlaying(true);
   }, [isAudioStarted, startAudio, isPlaying, bpm, stopTransport]);
 
@@ -239,13 +320,14 @@ export default function Blues() {
           {/* Play/Stop */}
           <button
             onClick={togglePlay}
-            className={`w-full rounded-xl py-3 font-bold text-white transition-all active:scale-95 ${
+            disabled={!midiReady}
+            className={`w-full rounded-xl py-3 font-bold text-white transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed ${
               isPlaying
                 ? "bg-rose-500 hover:bg-rose-600"
                 : "bg-indigo-500 hover:bg-indigo-600 shadow-md shadow-indigo-500/30"
             }`}
           >
-            {isPlaying ? "⏹ Stop" : "▶ Play"}
+            {isPlaying ? "⏹ Stop" : midiReady ? "▶ Play" : "Loading…"}
           </button>
 
           {/* Status / count-in */}
