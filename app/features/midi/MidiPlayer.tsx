@@ -425,8 +425,8 @@ export default function MidiPlayer() {
 
         <div className="w-full border-t border-gray-100 dark:border-gray-700" />
 
-        {/* Two-column: BPM | Reverb */}
-        <div className="w-full grid grid-cols-[1fr_auto_1fr] gap-6 items-start">
+        {/* BPM + Reverb — stack on mobile, side-by-side on sm+ */}
+        <div className="w-full flex flex-col sm:grid sm:grid-cols-[1fr_auto_1fr] gap-6 items-start">
 
           {/* Left: BPM + Tap Tempo */}
           <BpmControl
@@ -437,8 +437,9 @@ export default function MidiPlayer() {
             onTapTempo={tapTempo}
           />
 
-          {/* Vertical divider */}
-          <div className="self-stretch w-px bg-gray-100 dark:bg-gray-700" />
+          {/* Divider: vertical on sm+, horizontal on mobile */}
+          <div className="hidden sm:block self-stretch w-px bg-gray-100 dark:bg-gray-700" />
+          <div className="sm:hidden w-full h-px bg-gray-100 dark:bg-gray-700" />
 
           {/* Right: Reverb FX */}
           <fieldset className="flex flex-col gap-3">
