@@ -3,27 +3,28 @@ import type { ChordDef } from "./chord-data";
 interface Props {
   chord: ChordDef;
   onClick?: () => void;
+  size?: number; // scale multiplier — same viewBox, larger rendered size
 }
 
 const STRINGS = 6;
 const FRETS_SHOWN = 4;
 
-// SVG dimensions
+// SVG dimensions (base)
 const W = 100, H = 130;
-const TOP = 28;   // space above nut for mute/open markers
-const LEFT = 14;  // left margin for string labels
+const TOP = 28;
+const LEFT = 14;
 const RIGHT = 10;
 const BOTTOM = 14;
-const IW = W - LEFT - RIGHT;   // inner width
-const IH = H - TOP - BOTTOM;   // inner height
-const SW = IW / (STRINGS - 1); // string spacing
-const FH = IH / FRETS_SHOWN;   // fret spacing
-const R = 8;                    // dot radius
+const IW = W - LEFT - RIGHT;
+const IH = H - TOP - BOTTOM;
+const SW = IW / (STRINGS - 1);
+const FH = IH / FRETS_SHOWN;
+const R = 8;
 
-export default function ChordDiagram({ chord, onClick }: Props) {
-  const minFret = Math.min(...chord.frets.filter(f => f > 0));
-  // For open chords always start at fret 1
+export default function ChordDiagram({ chord, onClick, size = 1 }: Props) {
   const startFret = 1;
+  const w = W * size;
+  const h = H * size;
 
   return (
     <button
@@ -33,8 +34,8 @@ export default function ChordDiagram({ chord, onClick }: Props) {
     >
       <svg
         viewBox={`0 0 ${W} ${H}`}
-        width={W}
-        height={H}
+        width={w}
+        height={h}
         aria-hidden="true"
       >
         {/* Chord name */}
