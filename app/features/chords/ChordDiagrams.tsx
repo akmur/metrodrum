@@ -44,6 +44,9 @@ function ChordModal({ chord, onClose }: { chord: ChordDef; onClose: () => void }
             <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
           </svg>
         </button>
+        <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100 tracking-tight">
+          {chord.name}
+        </h2>
         <ChordDiagram chord={chord} size={2.5} />
       </div>
     </div>
