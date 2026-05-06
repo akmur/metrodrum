@@ -15,27 +15,57 @@ import {
 
 const DEGREE_LABELS: Record<BluesDegree, string> = { I7: "I7", IV7: "IV7", V7: "V7" };
 
+// Available loop files: { bpm, url }
+const LOOPS = [
+  { bpm: 90, url: "/samples/blues/blues-loop-90bpm.m4a" },
+] as const;
+type LoopBpm = (typeof LOOPS)[number]["bpm"];
+
 export default function Blues() {
   const { isAudioStarted, startAudio } = useAudio();
   const arpeggioSynthRef = useRef<Tone.Synth | null>(null);
   const clickSynthRef = useRef<Tone.Synth | null>(null);
   const loopRef = useRef<Tone.Loop | null>(null);
+  const playerRef = useRef<Tone.Player | null>(null);
   const beatRef = useRef(0);
 
   const [activeKey, setActiveKey] = useState<BluesKey>("E");
-  const [bpm, setBpm] = useState(100);
+  const [selectedBpm, setSelectedBpm] = useState<LoopBpm>(90);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [audioReady, setAudioReady] = useState(false);
   const [countIn, setCountIn] = useState<number | null>(null);
   const [currentBar, setCurrentBar] = useState<number | null>(null);
   const [highlighted, setHighlighted] = useState<BluesDegree | null>(null);
 
   const chordMap = BLUES_CHORDS[activeKey];
 
+  // Load audio player on mount (or when selected BPM changes)
+  useEffect(() => {
+    setAudioReady(false);
+    const loop = LOOPS.find(l => l.bpm === selectedBpm)!;
+    const player = new Tone.Player({
+      url: loop.url,
+      loop: true,
+      onload: () => setAudioReady(true),
+    }).toDestination();
+    playerRef.current = player;
+    return () => {
+      try { player.stop(); player.unsync(); player.dispose(); } catch { /* */ }
+      if (playerRef.current === player) playerRef.current = null;
+    };
+  }, [selectedBpm]);
+
   // Stop transport helper
   const stopTransport = useCallback(() => {
     loopRef.current?.stop();
     try { loopRef.current?.dispose(); } catch { /* already disposed */ }
     loopRef.current = null;
+
+    try { playerRef.current?.stop(); playerRef.current?.unsync(); } catch { /* */ }
+
+    try { clickSynthRef.current?.dispose(); } catch { /* */ }
+    clickSynthRef.current = null;
+
     Tone.getTransport().stop();
     Tone.getTransport().cancel();
     beatRef.current = 0;
@@ -43,11 +73,6 @@ export default function Blues() {
 
   // Cleanup on unmount
   useEffect(() => () => stopTransport(), [stopTransport]);
-
-  // Sync BPM to transport while playing
-  useEffect(() => {
-    if (isPlaying) Tone.getTransport().bpm.value = bpm;
-  }, [bpm, isPlaying]);
 
   const togglePlay = useCallback(async () => {
     if (!isAudioStarted) await startAudio();
@@ -60,23 +85,31 @@ export default function Blues() {
       return;
     }
 
-    if (!clickSynthRef.current) {
-      clickSynthRef.current = new Tone.Synth({
-        oscillator: { type: "triangle" },
-        envelope: { attack: 0.001, decay: 0.07, sustain: 0, release: 0.07 },
-        volume: -10,
-      }).toDestination();
-    }
+    if (!playerRef.current || !audioReady) return;
 
+    // Click synth for count-in only
+    clickSynthRef.current = new Tone.Synth({
+      oscillator: { type: "triangle" },
+      envelope: { attack: 0.001, decay: 0.07, sustain: 0, release: 0.07 },
+      volume: -10,
+    }).toDestination();
+
+    const transport = Tone.getTransport();
+    transport.bpm.value = selectedBpm;
+    transport.loop = false;
+
+    // Sync player to transport — starts after the 4-beat count-in ("1m")
+    playerRef.current.sync().start("1m");
+
+    // Beat-tracking loop: first 4 beats = count-in click, then track bars
     beatRef.current = 0;
-    Tone.getTransport().bpm.value = bpm;
-
     loopRef.current = new Tone.Loop((time) => {
       const beat = beatRef.current;
-      const isDownbeat = beat % 4 === 0;
-      clickSynthRef.current?.triggerAttackRelease(
-        isDownbeat ? "C5" : "G4", "64n", time,
-      );
+      if (beat < 4) {
+        clickSynthRef.current?.triggerAttackRelease(
+          beat % 4 === 0 ? "C5" : "G4", "64n", time,
+        );
+      }
       Tone.getDraw().schedule(() => {
         if (beat < 4) {
           setCountIn(4 - beat);
@@ -90,9 +123,9 @@ export default function Blues() {
     }, "4n");
 
     loopRef.current.start(0);
-    Tone.getTransport().start();
+    transport.start();
     setIsPlaying(true);
-  }, [isAudioStarted, startAudio, isPlaying, bpm, stopTransport]);
+  }, [isAudioStarted, startAudio, isPlaying, selectedBpm, audioReady, stopTransport]);
 
   const playChord = useCallback(async (degree: BluesDegree) => {
     const chordDef = CHORDS.find(c => c.name === chordMap[degree]);
@@ -209,43 +242,43 @@ export default function Blues() {
           </div>
         </div>
 
-        {/* Sidebar: metronome */}
+        {/* Sidebar: player */}
         <div className="w-full lg:w-52 shrink-0 lg:sticky lg:top-4 flex flex-col gap-4 rounded-2xl bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 p-5">
-          {/* BPM */}
+          {/* Tempo selector */}
           <div className="flex flex-col items-center gap-2">
             <label className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">
               Tempo
             </label>
-            <div className="flex items-center gap-2">
-              <button
-                onClick={() => setBpm(b => Math.max(40, b - 1))}
-                className="h-8 w-8 rounded-full bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 font-bold hover:bg-gray-200 dark:hover:bg-gray-600 active:scale-95 transition-all"
-              >−</button>
-              <span className="text-3xl font-bold tabular-nums text-gray-900 dark:text-white w-14 text-center">{bpm}</span>
-              <button
-                onClick={() => setBpm(b => Math.min(240, b + 1))}
-                className="h-8 w-8 rounded-full bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 font-bold hover:bg-gray-200 dark:hover:bg-gray-600 active:scale-95 transition-all"
-              >+</button>
+            <div className="flex gap-2 flex-wrap justify-center">
+              {LOOPS.map(l => (
+                <button
+                  key={l.bpm}
+                  disabled={isPlaying}
+                  onClick={() => setSelectedBpm(l.bpm)}
+                  className={`rounded-xl px-3 py-1.5 text-sm font-bold transition-all active:scale-95 disabled:opacity-40 ${
+                    selectedBpm === l.bpm
+                      ? "bg-indigo-500 text-white shadow-md shadow-indigo-500/30"
+                      : "bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600"
+                  }`}
+                >
+                  {l.bpm}
+                </button>
+              ))}
             </div>
-            <input
-              type="range" min={40} max={240} value={bpm}
-              onChange={e => setBpm(Number(e.target.value))}
-              className="w-full accent-indigo-500"
-              aria-label="BPM"
-            />
             <span className="text-xs text-gray-400 dark:text-gray-500">BPM</span>
           </div>
 
           {/* Play/Stop */}
           <button
             onClick={togglePlay}
-            className={`w-full rounded-xl py-3 font-bold text-white transition-all active:scale-95 ${
+            disabled={!audioReady}
+            className={`w-full rounded-xl py-3 font-bold text-white transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed ${
               isPlaying
                 ? "bg-rose-500 hover:bg-rose-600"
                 : "bg-indigo-500 hover:bg-indigo-600 shadow-md shadow-indigo-500/30"
             }`}
           >
-            {isPlaying ? "⏹ Stop" : "▶ Play"}
+            {isPlaying ? "⏹ Stop" : audioReady ? "▶ Play" : "Loading…"}
           </button>
 
           {/* Status / count-in */}
