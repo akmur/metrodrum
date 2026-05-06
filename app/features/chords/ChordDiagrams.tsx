@@ -6,6 +6,10 @@ const QUALITY_LABELS: Record<Quality, string> = {
   maj: "Major",
   min: "Minor",
   "7": "Dom 7",
+  maj7: "Maj 7",
+  m7: "Min 7",
+  dim: "Dim",
+  aug: "Aug",
   sus2: "Sus2",
   sus4: "Sus4",
 };

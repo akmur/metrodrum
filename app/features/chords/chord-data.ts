@@ -14,7 +14,7 @@ export interface ChordDef {
 }
 
 export const ROOTS = ["A", "B", "C", "D", "E", "F", "G"] as const;
-export const QUALITIES = ["maj", "min", "7", "sus2", "sus4"] as const;
+export const QUALITIES = ["maj", "min", "7", "maj7", "m7", "dim", "aug", "sus2", "sus4"] as const;
 export type Root = (typeof ROOTS)[number];
 export type Quality = (typeof QUALITIES)[number];
 
@@ -57,6 +57,20 @@ export const CHORDS: ChordDef[] = [
   },
   // ── B ──────────────────────────────────────────────
   {
+    name: "B",
+    root: "B",
+    quality: "maj",
+    frets:   [-1, 2, 4, 4, 4, 2],
+    fingers: [ 0, 1, 3, 3, 3, 1],
+  },
+  {
+    name: "Bm",
+    root: "B",
+    quality: "min",
+    frets:   [-1, 2, 4, 4, 3, 2],
+    fingers: [ 0, 1, 3, 4, 2, 1],
+  },
+  {
     name: "B7",
     root: "B",
     quality: "7",
@@ -70,6 +84,13 @@ export const CHORDS: ChordDef[] = [
     quality: "maj",
     frets:   [-1, 3, 2, 0, 1, 0],
     fingers: [ 0, 3, 2, 0, 1, 0],
+  },
+  {
+    name: "Cm",
+    root: "C",
+    quality: "min",
+    frets:   [-1, 3, 5, 5, 4, 3],
+    fingers: [ 0, 1, 3, 4, 2, 1],
   },
   {
     name: "C7",
@@ -130,6 +151,20 @@ export const CHORDS: ChordDef[] = [
     fingers: [0, 2, 3, 0, 0, 0],
   },
   {
+    name: "Esus2",
+    root: "E",
+    quality: "sus2",
+    frets:   [0, 2, 4, 4, 0, 0],
+    fingers: [0, 1, 3, 4, 0, 0],
+  },
+  {
+    name: "Esus4",
+    root: "E",
+    quality: "sus4",
+    frets:   [0, 2, 2, 2, 0, 0],
+    fingers: [0, 1, 2, 3, 0, 0],
+  },
+  {
     name: "E7",
     root: "E",
     quality: "7",
@@ -137,6 +172,20 @@ export const CHORDS: ChordDef[] = [
     fingers: [0, 2, 0, 1, 0, 0],
   },
   // ── F ──────────────────────────────────────────────
+  {
+    name: "F",
+    root: "F",
+    quality: "maj",
+    frets:   [1, 3, 3, 2, 1, 1],
+    fingers: [1, 3, 4, 2, 1, 1],
+  },
+  {
+    name: "Fm",
+    root: "F",
+    quality: "min",
+    frets:   [1, 3, 3, 1, 1, 1],
+    fingers: [1, 3, 4, 1, 1, 1],
+  },
   {
     name: "F7",
     root: "F",
@@ -153,10 +202,235 @@ export const CHORDS: ChordDef[] = [
     fingers: [2, 1, 0, 0, 0, 3],
   },
   {
+    name: "Gm",
+    root: "G",
+    quality: "min",
+    frets:   [3, 1, 0, 0, 3, 3],
+    fingers: [2, 1, 0, 0, 3, 4],
+  },
+  {
+    name: "Gsus2",
+    root: "G",
+    quality: "sus2",
+    frets:   [3, 0, 0, 0, 3, 3],
+    fingers: [2, 0, 0, 0, 3, 4],
+  },
+  {
+    name: "Gsus4",
+    root: "G",
+    quality: "sus4",
+    frets:   [3, 3, 0, 0, 1, 3],
+    fingers: [3, 4, 0, 0, 1, 3],
+  },
+  {
     name: "G7",
     root: "G",
     quality: "7",
     frets:   [3, 2, 0, 0, 0, 1],
     fingers: [3, 2, 0, 0, 0, 1],
+  },
+
+  // ── maj7 ───────────────────────────────────────────
+  {
+    name: "Amaj7",
+    root: "A",
+    quality: "maj7",
+    frets:   [-1, 0, 2, 1, 2, 0],
+    fingers: [ 0, 0, 3, 1, 4, 0],
+  },
+  {
+    name: "Bmaj7",
+    root: "B",
+    quality: "maj7",
+    frets:   [-1, 2, 4, 3, 4, 2],
+    fingers: [ 0, 1, 3, 2, 4, 1],
+  },
+  {
+    name: "Cmaj7",
+    root: "C",
+    quality: "maj7",
+    frets:   [-1, 3, 2, 0, 0, 0],
+    fingers: [ 0, 3, 2, 0, 0, 0],
+  },
+  {
+    name: "Dmaj7",
+    root: "D",
+    quality: "maj7",
+    frets:   [-1, -1, 0, 2, 2, 2],
+    fingers: [  0,  0, 0, 1, 2, 3],
+  },
+  {
+    name: "Emaj7",
+    root: "E",
+    quality: "maj7",
+    frets:   [0, 2, 1, 1, 0, 0],
+    fingers: [0, 3, 1, 2, 0, 0],
+  },
+  {
+    name: "Fmaj7",
+    root: "F",
+    quality: "maj7",
+    frets:   [-1, -1, 3, 2, 1, 0],
+    fingers: [  0,  0, 3, 2, 1, 0],
+  },
+  {
+    name: "Gmaj7",
+    root: "G",
+    quality: "maj7",
+    frets:   [3, 2, 0, 0, 0, 2],
+    fingers: [3, 2, 0, 0, 0, 1],
+  },
+
+  // ── m7 ─────────────────────────────────────────────
+  {
+    name: "Am7",
+    root: "A",
+    quality: "m7",
+    frets:   [-1, 0, 2, 0, 1, 0],
+    fingers: [ 0, 0, 2, 0, 1, 0],
+  },
+  {
+    name: "Bm7",
+    root: "B",
+    quality: "m7",
+    frets:   [-1, 2, 0, 2, 0, 2],
+    fingers: [ 0, 1, 0, 2, 0, 3],
+  },
+  {
+    name: "Cm7",
+    root: "C",
+    quality: "m7",
+    frets:   [-1, 3, 5, 3, 4, 3],
+    fingers: [ 0, 1, 3, 1, 2, 1],
+  },
+  {
+    name: "Dm7",
+    root: "D",
+    quality: "m7",
+    frets:   [-1, -1, 0, 2, 1, 1],
+    fingers: [  0,  0, 0, 2, 1, 1],
+  },
+  {
+    name: "Em7",
+    root: "E",
+    quality: "m7",
+    frets:   [0, 2, 0, 0, 0, 0],
+    fingers: [0, 1, 0, 0, 0, 0],
+  },
+  {
+    name: "Fm7",
+    root: "F",
+    quality: "m7",
+    frets:   [-1, -1, 3, 1, 1, 1],
+    fingers: [  0,  0, 3, 1, 1, 1],
+  },
+  {
+    name: "Gm7",
+    root: "G",
+    quality: "m7",
+    frets:   [-1, 1, 3, 3, 3, 3],
+    fingers: [ 0, 1, 3, 3, 3, 3],
+  },
+
+  // ── dim ────────────────────────────────────────────
+  {
+    name: "Adim",
+    root: "A",
+    quality: "dim",
+    frets:   [-1, 0, 1, 2, 1, -1],
+    fingers: [ 0, 0, 1, 3, 2,  0],
+  },
+  {
+    name: "Bdim",
+    root: "B",
+    quality: "dim",
+    frets:   [-1, 2, 3, 4, 3, 2],
+    fingers: [ 0, 1, 2, 4, 3, 1],
+  },
+  {
+    name: "Cdim",
+    root: "C",
+    quality: "dim",
+    frets:   [-1, 3, 4, 5, 4, 3],
+    fingers: [ 0, 1, 2, 4, 3, 1],
+  },
+  {
+    name: "Ddim",
+    root: "D",
+    quality: "dim",
+    frets:   [-1, -1, 0, 1, 3, 1],
+    fingers: [  0,  0, 0, 1, 3, 1],
+  },
+  {
+    name: "Edim",
+    root: "E",
+    quality: "dim",
+    frets:   [0, 1, 2, 3, 2, 0],
+    fingers: [0, 1, 2, 4, 3, 0],
+  },
+  {
+    name: "Fdim",
+    root: "F",
+    quality: "dim",
+    frets:   [-1, -1, 3, 1, 0, 1],
+    fingers: [  0,  0, 3, 1, 0, 2],
+  },
+  {
+    name: "Gdim",
+    root: "G",
+    quality: "dim",
+    frets:   [3, 1, 2, 3, 2, 3],
+    fingers: [2, 1, 2, 3, 2, 3],
+  },
+
+  // ── aug ────────────────────────────────────────────
+  {
+    name: "Aaug",
+    root: "A",
+    quality: "aug",
+    frets:   [-1, 0, 3, 2, 2, 1],
+    fingers: [ 0, 0, 4, 2, 3, 1],
+  },
+  {
+    name: "Baug",
+    root: "B",
+    quality: "aug",
+    frets:   [-1, 2, 1, 0, 0, -1],
+    fingers: [ 0, 2, 1, 0, 0,  0],
+  },
+  {
+    name: "Caug",
+    root: "C",
+    quality: "aug",
+    frets:   [-1, 3, 2, 1, 1, 0],
+    fingers: [ 0, 4, 3, 1, 2, 0],
+  },
+  {
+    name: "Daug",
+    root: "D",
+    quality: "aug",
+    frets:   [-1, -1, 0, 3, 3, 2],
+    fingers: [  0,  0, 0, 2, 3, 1],
+  },
+  {
+    name: "Eaug",
+    root: "E",
+    quality: "aug",
+    frets:   [0, 3, 2, 1, 1, 0],
+    fingers: [0, 4, 3, 1, 2, 0],
+  },
+  {
+    name: "Faug",
+    root: "F",
+    quality: "aug",
+    frets:   [-1, -1, 3, 2, 2, 1],
+    fingers: [  0,  0, 4, 2, 3, 1],
+  },
+  {
+    name: "Gaug",
+    root: "G",
+    quality: "aug",
+    frets:   [3, 2, 1, 0, 0, 3],
+    fingers: [3, 2, 1, 0, 0, 4],
   },
 ];
