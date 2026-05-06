@@ -47,9 +47,13 @@ export default function Blues() {
   useEffect(() => {
     setAudioReady(false);
     const loop = LOOPS.find(l => l.bpm === selectedBpm)!;
+    // Calculate exact 12-bar duration to avoid DAW export tail/silence
+    const exactLoopEnd = (12 * 4 * 60) / loop.bpm;
     const player = new Tone.Player({
       url: loop.url,
       loop: true,
+      loopStart: 0,
+      loopEnd: exactLoopEnd,
       onload: () => setAudioReady(true),
     }).toDestination();
     playerRef.current = player;
