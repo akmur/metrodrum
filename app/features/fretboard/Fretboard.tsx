@@ -83,7 +83,6 @@ export default function Fretboard() {
   const { isAudioStarted, startAudio } = useAudio();
   const synthRef = useRef<Tone.Synth | null>(null);
 
-  const [score, setScore] = useState({ correct: 0, total: 0 });
   const [pos, setPos] = useState<{ string: number; fret: number } | null>(null);
   const [answered, setAnswered] = useState<"correct" | "wrong" | null>(null);
   const [wrongLabel, setWrongLabel] = useState<string | null>(null);
@@ -123,7 +122,6 @@ export default function Fretboard() {
   }, []);
 
   useEffect(() => {
-    setScore({ correct: 0, total: 0 });
     nextNote(stringCount);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isBass]);
@@ -133,19 +131,13 @@ export default function Fretboard() {
     const target = getNoteAt(openIdx, pos.string, pos.fret);
     if (isCorrect(label, target)) {
       setAnswered("correct");
-      setScore(s => ({ correct: s.correct + 1, total: s.total + 1 }));
       setTimeout(() => nextNote(stringCount), 700);
     } else {
       setAnswered("wrong");
       setWrongLabel(label);
-      setScore(s => ({ correct: s.correct, total: s.total + 1 }));
       setTimeout(() => nextNote(stringCount), 900);
     }
   }, [pos, answered, nextNote, openIdx, stringCount]);
-
-  const percentage = score.total === 0
-    ? 0
-    : Math.round((score.correct / score.total) * 100);
 
   const correctNote = pos ? getNoteAt(openIdx, pos.string, pos.fret) : null;
 
@@ -165,12 +157,6 @@ export default function Fretboard() {
 
   return (
     <div className="flex flex-col items-center gap-8 py-8 px-4">
-      {/* Score */}
-      <div className="flex gap-12 text-xl font-semibold text-gray-600 dark:text-gray-300">
-        <span>{score.correct}/{score.total}</span>
-        <span>{percentage}%</span>
-      </div>
-
       {/* Card */}
       <div className="w-full max-w-3xl bg-gray-50 dark:bg-gray-800 rounded-2xl shadow-md p-6 flex flex-col gap-10">
         <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100 tracking-tight">
