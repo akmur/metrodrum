@@ -12,6 +12,10 @@ import { AudioProvider } from "@/providers/AudioProvider";
 import { ThemeProvider } from "@/providers/ThemeProvider";
 import "./app.css";
 
+export const meta: Route.MetaFunction = () => [
+  { title: "Metrodrum" },
+];
+
 export const links: Route.LinksFunction = () => [
   { rel: "preconnect", href: "https://fonts.googleapis.com" },
   {
