@@ -7,6 +7,7 @@ const LINKS = [
   { to: "/midi",      label: "MIDI" },
   { to: "/fretboard", label: "Fretboard" },
   { to: "/chords",    label: "Chords" },
+  { to: "/triads",    label: "Triads" },
   { to: "/blues",     label: "Blues" },
 ];
 

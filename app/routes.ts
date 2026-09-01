@@ -7,6 +7,7 @@ export default [
     route("midi", "routes/midi.tsx"),
     route("fretboard", "routes/fretboard.tsx"),
     route("chords", "routes/chords.tsx"),
+    route("triads", "routes/triads.tsx"),
     route("blues", "routes/blues.tsx"),
   ]),
 ] satisfies RouteConfig;
