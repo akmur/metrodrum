@@ -30,6 +30,11 @@ export default function FindTheFret() {
     setSelected(prev => ({ ...prev, [s]: !prev[s] }));
   };
 
+  const reset = () => {
+    setSelected(Object.fromEntries(STRINGS.map(s => [s, true])) as Record<StringName, boolean>);
+    setCurrent(null);
+  };
+
   const started = current !== null;
 
   return (
@@ -75,15 +80,23 @@ export default function FindTheFret() {
       )}
 
       {/* Buttons */}
-      <div className="flex justify-center">
+      <div className="flex justify-center gap-3">
         {started ? (
-          <button
-            onClick={nextPrompt}
-            disabled={activeStrings.length === 0}
-            className="rounded-xl px-6 py-2.5 text-sm font-semibold text-white bg-indigo-500 hover:bg-indigo-600 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-          >
-            Next
-          </button>
+          <>
+            <button
+              onClick={nextPrompt}
+              disabled={activeStrings.length === 0}
+              className="rounded-xl px-6 py-2.5 text-sm font-semibold text-white bg-indigo-500 hover:bg-indigo-600 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+            >
+              Next
+            </button>
+            <button
+              onClick={reset}
+              className="rounded-xl px-6 py-2.5 text-sm font-semibold text-gray-700 dark:text-gray-200 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+            >
+              Reset
+            </button>
+          </>
         ) : (
           <button
             onClick={nextPrompt}
