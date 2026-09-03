@@ -71,7 +71,7 @@ export default function ChordDiagrams() {
   return (
     <>
       <div className="flex justify-center py-10 px-4">
-        <div className="w-full max-w-2xl bg-white dark:bg-gray-800 rounded-3xl shadow-xl p-8 flex flex-col gap-7">
+        <div className="w-full max-w-3xl bg-white dark:bg-gray-800 rounded-3xl shadow-xl p-8 flex flex-col gap-7">
 
           {/* Filters */}
           <div className="flex flex-col gap-4">
