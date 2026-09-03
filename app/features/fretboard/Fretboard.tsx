@@ -1,7 +1,6 @@
 import { useState, useCallback, useEffect, useRef } from "react";
 import * as Tone from "tone";
 import { useAudio } from "@/providers/AudioProvider";
-import FindTheFret from "./FindTheFret";
 
 const CHROMATIC = [
   "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B",
@@ -156,7 +155,7 @@ export default function Fretboard() {
   const dotFill = answered === "correct" ? "#22c55e" : "#ef4444";
 
   return (
-    <div className="flex flex-col items-center gap-8 py-8 px-4">
+    <div className="flex flex-col items-center gap-8 w-full">
       {/* Card */}
       <div className="w-full max-w-3xl bg-gray-50 dark:bg-gray-800 rounded-2xl shadow-md p-6 flex flex-col gap-10">
         <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100 tracking-tight">
@@ -290,8 +289,6 @@ export default function Fretboard() {
           Bass (4 strings)
         </label>
       </div>
-
-      <FindTheFret />
     </div>
   );
 }
