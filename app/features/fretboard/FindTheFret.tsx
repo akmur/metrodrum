@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { usePitchDetector } from "./usePitchDetector";
 
 const STRINGS = ["E", "A", "D", "G", "B", "e"] as const;
@@ -19,7 +19,7 @@ export default function FindTheFret() {
   const [current, setCurrent] = useState<{ note: (typeof NOTES)[number]; string: StringName } | null>(null);
   const [listen, setListen] = useState(false);
 
-  const activeStrings = STRINGS.filter(s => selected[s]);
+  const activeStrings = useMemo(() => STRINGS.filter(s => selected[s]), [selected]);
 
   const started = current !== null;
   const { note: detectedNote, error: micError } = usePitchDetector(listen && started);
@@ -27,12 +27,28 @@ export default function FindTheFret() {
   const targetPc = current ? NOTES.indexOf(current.note) : null;
   const isMatch = detectedNote !== null && targetPc !== null && detectedNote.midi % 12 === targetPc;
 
-  const nextPrompt = () => {
+  const nextPrompt = useCallback(() => {
     setCurrent({
       note: pickRandom(NOTES),
       string: pickRandom(activeStrings),
     });
-  };
+  }, [activeStrings]);
+
+  const canAdvanceRef = useRef(true);
+
+  // Re-arm only after silence so a held note can't cascade into the next prompt.
+  useEffect(() => {
+    if (detectedNote === null) canAdvanceRef.current = true;
+  }, [detectedNote]);
+
+  // Auto-advance when the correct note is played.
+  useEffect(() => {
+    if (isMatch && canAdvanceRef.current) {
+      canAdvanceRef.current = false;
+      const t = setTimeout(nextPrompt, 600);
+      return () => clearTimeout(t);
+    }
+  }, [isMatch, nextPrompt]);
 
   const toggleString = (s: StringName) => {
     setSelected(prev => ({ ...prev, [s]: !prev[s] }));
