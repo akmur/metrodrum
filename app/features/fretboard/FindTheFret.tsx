@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { usePitchDetector } from "./usePitchDetector";
 
 const STRINGS = ["E", "A", "D", "G", "B", "e"] as const;
 type StringName = (typeof STRINGS)[number];
@@ -15,9 +16,16 @@ export default function FindTheFret() {
   const [selected, setSelected] = useState<Record<StringName, boolean>>(
     () => Object.fromEntries(STRINGS.map(s => [s, true])) as Record<StringName, boolean>
   );
-  const [current, setCurrent] = useState<{ note: string; string: StringName } | null>(null);
+  const [current, setCurrent] = useState<{ note: (typeof NOTES)[number]; string: StringName } | null>(null);
+  const [listen, setListen] = useState(false);
 
   const activeStrings = STRINGS.filter(s => selected[s]);
+
+  const started = current !== null;
+  const { note: detectedNote, error: micError } = usePitchDetector(listen && started);
+
+  const targetPc = current ? NOTES.indexOf(current.note) : null;
+  const isMatch = detectedNote !== null && targetPc !== null && detectedNote.midi % 12 === targetPc;
 
   const nextPrompt = () => {
     setCurrent({
@@ -34,8 +42,6 @@ export default function FindTheFret() {
     setSelected(Object.fromEntries(STRINGS.map(s => [s, true])) as Record<StringName, boolean>);
     setCurrent(null);
   };
-
-  const started = current !== null;
 
   return (
     <div className="w-full max-w-3xl bg-gray-50 dark:bg-gray-800 rounded-2xl shadow-md p-6 flex flex-col gap-6">
@@ -64,6 +70,16 @@ export default function FindTheFret() {
             </label>
           ))}
         </div>
+
+        <label className="flex items-center gap-2 text-sm font-medium text-gray-600 dark:text-gray-300 select-none cursor-pointer mt-2">
+          <input
+            type="checkbox"
+            checked={listen}
+            onChange={e => setListen(e.target.checked)}
+            className="w-4 h-4 accent-indigo-500"
+          />
+          Listen to microphone
+        </label>
       </div>
 
       {/* Prompt */}
@@ -76,6 +92,30 @@ export default function FindTheFret() {
           <span className="text-lg text-gray-600 dark:text-gray-300">
             on the <strong className="text-indigo-600 dark:text-indigo-400">{current.string}</strong> string
           </span>
+
+          {listen && (
+            <div className="mt-3">
+              {micError ? (
+                <span className="text-sm text-red-500 dark:text-red-400">
+                  Microphone error: {micError}
+                </span>
+              ) : detectedNote ? (
+                <span
+                  className={`text-xl font-bold ${
+                    isMatch
+                      ? "text-green-600 dark:text-green-400"
+                      : "text-red-600 dark:text-red-400"
+                  }`}
+                >
+                  {NOTES[detectedNote.midi % 12]} {isMatch ? "✓" : "✗"}
+                </span>
+              ) : (
+                <span className="text-sm text-gray-400 dark:text-gray-500">
+                  Listening…
+                </span>
+              )}
+            </div>
+          )}
         </div>
       )}
 
