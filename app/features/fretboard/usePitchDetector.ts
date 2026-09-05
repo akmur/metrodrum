@@ -6,8 +6,14 @@ export interface DetectedNote {
   clarity: number;
 }
 
-const CLARITY_THRESHOLD = 0.9;
-const MIN_VOLUME_DB = -40;
+const CLARITY_THRESHOLD = 0.95;
+const MIN_VOLUME_DB = -35;
+// Guitar range guard: reject mains hum (~50/60 Hz) and high-frequency noise.
+const MIN_FREQ = 60;
+const MAX_FREQ = 1500;
+// Hysteresis: how many consecutive frames must agree before we show/clear a note.
+const STABLE_FRAMES = 3;
+const SILENT_FRAMES = 5;
 
 export function usePitchDetector(enabled: boolean) {
   const [note, setNote] = useState<DetectedNote | null>(null);
@@ -27,6 +33,10 @@ export function usePitchDetector(enabled: boolean) {
     let ctx: AudioContext | null = null;
     let raf = 0;
 
+    let candidateMidi: number | null = null;
+    let candidateCount = 0;
+    let silentCount = 0;
+
     const publish = (value: DetectedNote | null) => {
       const midi = value ? value.midi : null;
       if (midi !== lastMidiRef.current) {
@@ -44,11 +54,32 @@ export function usePitchDetector(enabled: boolean) {
       if (cancelled) return;
       analyser.getFloatTimeDomainData(buf);
       const [pitch, clarity] = detector.findPitch(buf, sampleRate);
-      if (pitch > 0 && clarity >= CLARITY_THRESHOLD) {
-        publish({ midi: Math.round(12 * Math.log2(pitch / 440) + 69), clarity });
+
+      const midi =
+        pitch > MIN_FREQ && pitch < MAX_FREQ && clarity >= CLARITY_THRESHOLD
+          ? Math.round(12 * Math.log2(pitch / 440) + 69)
+          : null;
+
+      if (midi !== null) {
+        silentCount = 0;
+        if (midi === candidateMidi) {
+          candidateCount++;
+        } else {
+          candidateMidi = midi;
+          candidateCount = 1;
+        }
+        if (candidateCount >= STABLE_FRAMES) {
+          publish({ midi, clarity });
+        }
       } else {
-        publish(null);
+        candidateCount = 0;
+        silentCount++;
+        if (silentCount >= SILENT_FRAMES) {
+          candidateMidi = null;
+          publish(null);
+        }
       }
+
       raf = requestAnimationFrame(() => loop(analyser, detector, buf, sampleRate));
     };
 
