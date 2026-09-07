@@ -1,14 +1,13 @@
 import { useState } from "react";
 import TriadDiagram from "./TriadDiagram";
 import {
-  ROOTS,
   QUALITIES,
   QUALITY_LABELS,
-  TRIADS,
-  type Root,
+  SHAPES,
+  STRING_SETS,
   type Quality,
-  type TriadDef,
-  type TriadPosition,
+  type StringSetLabel,
+  type TriadShape,
 } from "./triad-data";
 
 function FilterButton({ label, active, onClick }: { label: string; active: boolean; onClick: () => void }) {
@@ -26,15 +25,7 @@ function FilterButton({ label, active, onClick }: { label: string; active: boole
   );
 }
 
-function TriadModal({
-  triad,
-  position,
-  onClose,
-}: {
-  triad: TriadDef;
-  position: TriadPosition;
-  onClose: () => void;
-}) {
+function TriadModal({ shape, onClose }: { shape: TriadShape; onClose: () => void }) {
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm"
@@ -54,27 +45,34 @@ function TriadModal({
           </svg>
         </button>
         <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100 tracking-tight">
-          {triad.name}
+          {QUALITY_LABELS[shape.quality]} triad
         </h2>
         <p className="text-sm text-gray-500 dark:text-gray-400 -mt-2">
-          {position.inversion}
+          {shape.inversion}
         </p>
-        <TriadDiagram position={position} size={2.5} />
+        <TriadDiagram shape={shape} size={2.5} />
       </div>
     </div>
   );
 }
 
 export default function Triads() {
-  const [activeRoot, setActiveRoot] = useState<Root | null>(null);
   const [activeQuality, setActiveQuality] = useState<Quality | null>(null);
-  const [selected, setSelected] = useState<{ triad: TriadDef; position: TriadPosition } | null>(null);
+  const [activeStringSet, setActiveStringSet] = useState<StringSetLabel | null>(null);
+  const [selected, setSelected] = useState<TriadShape | null>(null);
 
-  const filtered = TRIADS.filter(t => {
-    if (activeRoot && t.root !== activeRoot) return false;
-    if (activeQuality && t.quality !== activeQuality) return false;
-    return true;
-  });
+  const stringSetMatches = (strings: TriadShape["strings"]) => {
+    if (!activeStringSet) return true;
+    const set = STRING_SETS.find(s => s.label === activeStringSet)!;
+    return strings.every((s, i) => s === set.strings[i]);
+  };
+
+  const groups = QUALITIES.filter(q => !activeQuality || q === activeQuality)
+    .map(quality => ({
+      quality,
+      shapes: SHAPES.filter(s => s.quality === quality && stringSetMatches(s.strings)),
+    }))
+    .filter(g => g.shapes.length > 0);
 
   return (
     <>
@@ -83,22 +81,6 @@ export default function Triads() {
 
           {/* Filters */}
           <div className="flex flex-col gap-4">
-            <fieldset className="flex flex-col gap-2">
-              <legend className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-1">
-                Root
-              </legend>
-              <div className="flex flex-wrap gap-2">
-                {ROOTS.map(root => (
-                  <FilterButton
-                    key={root}
-                    label={root}
-                    active={activeRoot === root}
-                    onClick={() => setActiveRoot(prev => prev === root ? null : root)}
-                  />
-                ))}
-              </div>
-            </fieldset>
-
             <fieldset className="flex flex-col gap-2">
               <legend className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-1">
                 Quality
@@ -114,33 +96,44 @@ export default function Triads() {
                 ))}
               </div>
             </fieldset>
+
+            <fieldset className="flex flex-col gap-2">
+              <legend className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-1">
+                Strings
+              </legend>
+              <div className="flex flex-wrap gap-2">
+                {STRING_SETS.map(s => (
+                  <FilterButton
+                    key={s.label}
+                    label={s.label}
+                    active={activeStringSet === s.label}
+                    onClick={() => setActiveStringSet(prev => prev === s.label ? null : s.label)}
+                  />
+                ))}
+              </div>
+            </fieldset>
           </div>
 
           <div className="w-full border-t border-gray-100 dark:border-gray-700" />
 
-          {/* Triad groups */}
-          {filtered.length === 0 ? (
+          {/* Shape groups */}
+          {groups.length === 0 ? (
             <p className="text-center text-sm text-gray-400 dark:text-gray-500 py-6">
               No triads found for this combination.
             </p>
           ) : (
             <div className="flex flex-col gap-8">
-              {filtered.map(triad => (
-                <section key={triad.name} className="flex flex-col gap-3">
-                  <div className="flex items-baseline gap-2">
-                    <h3 className="text-xl font-bold text-gray-800 dark:text-gray-100 tracking-tight">
-                      {triad.name}
-                    </h3>
-                    <span className="text-sm text-gray-400 dark:text-gray-500">
-                      {QUALITY_LABELS[triad.quality]}
-                    </span>
-                  </div>
+              {groups.map(group => (
+                <section key={group.quality} className="flex flex-col gap-3">
+                  <h3 className="text-xl font-bold text-gray-800 dark:text-gray-100 tracking-tight">
+                    {QUALITY_LABELS[group.quality]}
+                  </h3>
                   <div className="flex flex-wrap gap-4">
-                    {triad.positions.map((position, i) => (
+                    {group.shapes.map((shape, i) => (
                       <TriadDiagram
-                        key={`${position.inversion}-${position.strings.join()}-${i}`}
-                        position={position}
-                        onClick={() => setSelected({ triad, position })}
+                        key={`${shape.inversion}-${shape.strings.join()}-${i}`}
+                        shape={shape}
+                        onClick={() => setSelected(shape)}
                       />
                     ))}
                   </div>
@@ -152,13 +145,7 @@ export default function Triads() {
         </div>
       </div>
 
-      {selected && (
-        <TriadModal
-          triad={selected.triad}
-          position={selected.position}
-          onClose={() => setSelected(null)}
-        />
-      )}
+      {selected && <TriadModal shape={selected} onClose={() => setSelected(null)} />}
     </>
   );
 }

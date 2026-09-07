@@ -1,8 +1,8 @@
-import type { TriadPosition } from "./triad-data";
+import type { TriadShape } from "./triad-data";
 import { STRING_NOTES } from "./triad-data";
 
 interface Props {
-  position: TriadPosition;
+  shape: TriadShape;
   onClick?: () => void;
   size?: number;
 }
@@ -14,19 +14,13 @@ const TOP = 30;
 const BOTTOM = 24;
 const FRET_H = 26;
 const STRING_GAP = 28;
-const DOT_R = 9;
+const DOT_R = 11;
 
-export default function TriadDiagram({ position, onClick, size = 1 }: Props) {
-  const { strings, frets, inversion, rootString } = position;
+export default function TriadDiagram({ shape, onClick, size = 1 }: Props) {
+  const { strings, frets, inversion, intervals, rootIndex } = shape;
 
-  const hasOpen = frets.some(f => f === 0);
-  const nonOpen = frets.filter(f => f > 0);
-  const minNonOpen = nonOpen.length ? Math.min(...nonOpen) : 1;
-  const maxNonOpen = nonOpen.length ? Math.max(...nonOpen) : 1;
-  const startFret = hasOpen ? 1 : minNonOpen;
-  const fretCount = hasOpen
-    ? Math.max(4, maxNonOpen)
-    : Math.max(4, maxNonOpen - minNonOpen + 1);
+  const startFret = Math.min(...frets);
+  const fretCount = Math.max(4, Math.max(...frets) - startFret + 1);
 
   const H = TOP + fretCount * FRET_H + BOTTOM;
   const IW = STRING_GAP * 2;
@@ -53,35 +47,14 @@ export default function TriadDiagram({ position, onClick, size = 1 }: Props) {
           {inversion}
         </text>
 
-        {/* Open-string markers */}
-        {strings.map((s, i) => {
-          if (frets[i] !== 0) return null;
-          return (
-            <circle
-              key={i}
-              cx={cx(i)} cy={TOP - 8} r={3.5}
-              strokeWidth={1.2} fill="none"
-              className="stroke-gray-500 dark:stroke-gray-400"
-            />
-          );
-        })}
-
-        {/* Nut (when open strings present) or start-fret label */}
-        {hasOpen ? (
-          <rect
-            x={LEFT - 6} y={TOP}
-            width={IW + 12} height={4} rx={1}
-            className="fill-gray-800 dark:fill-gray-200"
-          />
-        ) : (
-          <text
-            x={LEFT - 10} y={TOP + FRET_H * 0.5}
-            textAnchor="end" fontSize={10}
-            className="fill-gray-500 dark:fill-gray-400"
-          >
-            {startFret}
-          </text>
-        )}
+        {/* Start-fret label */}
+        <text
+          x={LEFT - 10} y={TOP + FRET_H * 0.5}
+          textAnchor="end" fontSize={10}
+          className="fill-gray-500 dark:fill-gray-400"
+        >
+          {startFret}
+        </text>
 
         {/* String lines */}
         {strings.map((s, i) => (
@@ -105,17 +78,23 @@ export default function TriadDiagram({ position, onClick, size = 1 }: Props) {
           />
         ))}
 
-        {/* Note dots */}
+        {/* Note dots with interval labels */}
         {strings.map((s, i) => {
-          const fret = frets[i];
-          if (fret <= 0) return null;
-          const isRoot = s === rootString;
+          const isRoot = i === rootIndex;
           return (
-            <circle
-              key={i}
-              cx={cx(i)} cy={dotY(rowOf(fret))} r={DOT_R}
-              className={isRoot ? "fill-indigo-500" : "fill-gray-800 dark:fill-gray-100"}
-            />
+            <g key={i}>
+              <circle
+                cx={cx(i)} cy={dotY(rowOf(frets[i]))} r={DOT_R}
+                className={isRoot ? "fill-indigo-500" : "fill-gray-800 dark:fill-gray-100"}
+              />
+              <text
+                x={cx(i)} y={dotY(rowOf(frets[i])) + 3}
+                textAnchor="middle" fontSize={9} fontWeight="bold"
+                className={isRoot ? "fill-white" : "fill-white dark:fill-gray-900"}
+              >
+                {intervals[i]}
+              </text>
+            </g>
           );
         })}
 
