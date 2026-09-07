@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { usePitchDetector } from "./usePitchDetector";
 
 const STRINGS = ["E", "A", "D", "G", "B", "e"] as const;
@@ -34,21 +34,22 @@ export default function FindTheFret() {
     });
   }, [activeStrings]);
 
-  const canAdvanceRef = useRef(true);
+  // Grace period: after each prompt change, wait 0.5s before listening again.
+  const [ready, setReady] = useState(true);
 
-  // Re-arm only after silence so a held note can't cascade into the next prompt.
   useEffect(() => {
-    if (detectedNote === null) canAdvanceRef.current = true;
-  }, [detectedNote]);
+    if (!current) return;
+    setReady(false);
+    const t = setTimeout(() => setReady(true), 500);
+    return () => clearTimeout(t);
+  }, [current]);
 
-  // Auto-advance when the correct note is played.
+  // Auto-advance once the correct note has been detected for 150ms.
   useEffect(() => {
-    if (isMatch && canAdvanceRef.current) {
-      canAdvanceRef.current = false;
-      const t = setTimeout(nextPrompt, 600);
-      return () => clearTimeout(t);
-    }
-  }, [isMatch, nextPrompt]);
+    if (!isMatch || !ready) return;
+    const t = setTimeout(() => nextPrompt(), 150);
+    return () => clearTimeout(t);
+  }, [isMatch, ready, nextPrompt]);
 
   const toggleString = (s: StringName) => {
     setSelected(prev => ({ ...prev, [s]: !prev[s] }));
@@ -114,6 +115,10 @@ export default function FindTheFret() {
               {micError ? (
                 <span className="text-sm text-red-500 dark:text-red-400">
                   Microphone error: {micError}
+                </span>
+              ) : !ready ? (
+                <span className="text-sm text-gray-400 dark:text-gray-500">
+                  Get ready…
                 </span>
               ) : detectedNote ? (
                 <span
