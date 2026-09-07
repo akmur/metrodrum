@@ -4,7 +4,7 @@ export default [
   layout("components/Layout.tsx", [
     index("routes/home.tsx"),
     route("metronome", "routes/metronome.tsx"),
-    route("midi", "routes/midi.tsx"),
+    route("beats", "routes/beats.tsx"),
     route("fretboard", "routes/fretboard.tsx", [
       index("routes/fretboard.note.tsx"),
       route("fret", "routes/fretboard.fret.tsx"),
