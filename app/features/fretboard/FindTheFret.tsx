@@ -61,7 +61,7 @@ export default function FindTheFret() {
   };
 
   return (
-    <div className="w-full max-w-3xl bg-gray-50 dark:bg-gray-800 rounded-2xl shadow-md p-6 flex flex-col gap-6">
+    <div className="w-full max-w-5xl bg-gray-50 dark:bg-gray-800 rounded-2xl shadow-md p-6 flex flex-col gap-6">
       <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100 tracking-tight">
         Find the fret
       </h2>

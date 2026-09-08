@@ -363,7 +363,7 @@ export default function MidiPlayer() {
 
   return (
     <div className="flex justify-center py-10 px-4">
-      <div className="w-full max-w-xl bg-white dark:bg-gray-800 rounded-3xl shadow-xl p-8 flex flex-col gap-7">
+      <div className="w-full max-w-5xl bg-white dark:bg-gray-800 rounded-3xl shadow-xl p-8 flex flex-col gap-7">
 
         {/* File loading */}
         <div className="flex flex-col gap-4">

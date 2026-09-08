@@ -46,7 +46,7 @@ export default function Metronome() {
 
   return (
     <div className="flex justify-center py-10 px-4">
-      <div className="w-full max-w-xl bg-white dark:bg-gray-800 rounded-3xl shadow-xl p-8 flex flex-col items-center gap-7">
+      <div className="w-full max-w-5xl bg-white dark:bg-gray-800 rounded-3xl shadow-xl p-8 flex flex-col items-center gap-7">
 
         {/* Beat indicators */}
         <div className="flex gap-3 h-12 items-center" role="group" aria-label="Beat indicator">

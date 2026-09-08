@@ -162,7 +162,7 @@ export default function Blues() {
   const activeDegree = currentBar !== null ? PROGRESSION[currentBar] : null;
 
   return (
-    <div className="flex flex-col gap-6 px-4 py-8 max-w-4xl mx-auto">
+    <div className="flex flex-col gap-6 px-4 py-8 max-w-5xl mx-auto">
       <div>
         <h1 className="text-2xl font-bold text-gray-900 dark:text-white">12-Bar Blues</h1>
         <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">

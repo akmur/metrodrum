@@ -112,7 +112,7 @@ export default function Beats() {
 
   return (
     <div className="flex justify-center py-10 px-4">
-      <div className="w-full max-w-xl bg-white dark:bg-gray-800 rounded-3xl shadow-xl p-8 flex flex-col gap-7">
+      <div className="w-full max-w-5xl bg-white dark:bg-gray-800 rounded-3xl shadow-xl p-8 flex flex-col gap-7">
 
         {beats.length === 0 ? (
           <p className="text-center text-sm text-gray-400 dark:text-gray-500 py-6">
