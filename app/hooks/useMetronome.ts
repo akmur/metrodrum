@@ -58,13 +58,13 @@ export function useMetronome(): MetronomeState {
   const [bpm, setBpmState] = useState(90);
   const [beats, setBeatsState] = useState<Beats>(4);
   const [noteValue, setNoteValueState] = useState<NoteValue>(4);
-  const [soundPreset, setSoundPresetState] = useState<SoundPreset>("click");
+  const [soundPreset, setSoundPresetState] = useState<SoundPreset>("sticks");
   const [accentEnabled, setAccentEnabled] = useState(true);
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentBeat, setCurrentBeat] = useState(-1);
 
   const synthRef = useRef<Tone.Synth | Tone.MembraneSynth | null>(null);
-  const accentSynthRef = useRef<Tone.MembraneSynth | null>(null); // sticks only
+  const sticksSamplerRef = useRef<Tone.Sampler | null>(null);
   const accentEnabledRef = useRef(true);
   const loopRef = useRef<Tone.Loop | null>(null);
   const beatRef = useRef(0);
@@ -74,7 +74,7 @@ export function useMetronome(): MetronomeState {
     return () => {
       loopRef.current?.dispose();
       synthRef.current?.dispose();
-      accentSynthRef.current?.dispose();
+      sticksSamplerRef.current?.dispose();
       if (Tone.getTransport().state === "started") {
         Tone.getTransport().stop();
       }
@@ -95,8 +95,6 @@ export function useMetronome(): MetronomeState {
     loopRef.current = null;
     synthRef.current?.dispose();
     synthRef.current = null;
-    accentSynthRef.current?.dispose();
-    accentSynthRef.current = null;
     beatRef.current = 0;
     setIsPlaying(false);
     setCurrentBeat(-1);
@@ -122,35 +120,49 @@ export function useMetronome(): MetronomeState {
     setAccentEnabled(enabled);
   }, []);
 
-  const startMetronome = useCallback(() => {
+  const ensureSticksSampler = useCallback(async (): Promise<Tone.Sampler> => {
+    if (sticksSamplerRef.current) return sticksSamplerRef.current;
+    const sampler = new Tone.Sampler({
+      urls: { C5: "/samples/drums/stick.wav" },
+      release: 0.1,
+    }).toDestination();
+    sticksSamplerRef.current = sampler;
+    await Tone.loaded();
+    return sampler;
+  }, []);
+
+  const startMetronome = useCallback(async () => {
     const transport = Tone.getTransport();
 
     loopRef.current?.dispose();
     synthRef.current?.dispose();
-    accentSynthRef.current?.dispose();
-    accentSynthRef.current = null;
 
-    // For sticks: two dedicated synths so accent and normal beats never share
-    // oscillator/envelope state. Each synth handles only its own role, always
-    // starting from a clean state at any reasonable BPM.
-    const normalSynth = createSynthForPreset(soundPreset);
-    synthRef.current = normalSynth;
+    let voice: Tone.Synth | Tone.MembraneSynth | Tone.Sampler;
+    let accentNote = "C5";
+    let normalNote = "G4";
+    let accentVelocity = 1;
+    let normalVelocity = 1;
 
-    let accentSynth: Tone.Synth | Tone.MembraneSynth = normalSynth;
     if (soundPreset === "sticks") {
-      accentSynth = createSynthForPreset("sticks");
-      accentSynthRef.current = accentSynth as Tone.MembraneSynth;
+      voice = await ensureSticksSampler();
+      accentNote = "C5";
+      normalNote = "C5";
+      normalVelocity = 0.4;
+      synthRef.current = null;
+    } else {
+      voice = createSynthForPreset(soundPreset);
+      synthRef.current = voice as Tone.Synth | Tone.MembraneSynth;
     }
 
     transport.bpm.value = bpm;
     beatRef.current = 0;
 
-    const [accentNote, normalNote] = soundPreset === "sticks" ? ["E5", "A5"] : ["C5", "G4"];
     const loop = new Tone.Loop((time) => {
       const beat = beatRef.current;
       const isAccent = beat === 0 && accentEnabledRef.current;
-      const synth = isAccent ? accentSynth : normalSynth;
-      synth.triggerAttackRelease(isAccent ? accentNote : normalNote, "32n", time);
+      const note = isAccent ? accentNote : normalNote;
+      const velocity = isAccent ? accentVelocity : normalVelocity;
+      voice.triggerAttackRelease(note, "32n", time, velocity);
       Tone.getDraw().schedule(() => {
         setCurrentBeat(beat);
       }, time);
@@ -161,7 +173,7 @@ export function useMetronome(): MetronomeState {
     loopRef.current = loop;
     transport.start();
     setIsPlaying(true);
-  }, [bpm, beats, noteValue, soundPreset]);
+  }, [bpm, beats, noteValue, soundPreset, ensureSticksSampler]);
 
   const toggle = useCallback(async () => {
     if (!isAudioStarted) {
@@ -170,7 +182,7 @@ export function useMetronome(): MetronomeState {
     if (isPlaying) {
       stop();
     } else {
-      startMetronome();
+      await startMetronome();
     }
   }, [isAudioStarted, startAudio, isPlaying, stop, startMetronome]);
 
